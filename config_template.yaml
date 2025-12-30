@@ -1,0 +1,39 @@
+# Default configuration for 02-make_overviews.py
+# CLI flags override these values.
+
+# Glob for input tiles
+pattern: "*_channels.tif*"
+
+# Output directories (defaults to sibling folders if omitted)
+out_jpegs: null
+out_montages: null
+
+# Output format: "jpg" or "png"
+format: "jpg"
+
+# Overwrite existing outputs
+overwrite: false
+
+# Save side-by-side channel 0/1 view alongside composites
+split_view: false
+
+# Burned label: "basename", "region", or "none"
+label: "basename"
+
+# Optional glob to limit files (useful for debug)
+only: null
+
+# Per-ID scaling aggregation: "median" or "mean"
+per_id_agg: "median"
+
+# Downscale tiles so max(width,height) <= this before saving
+tile_max_side: 2048
+
+# Channel mapping to RGB; use -1 to disable a color
+ch_blue: 0
+ch_green: -1
+ch_red: 1
+
+# Montage limits to prevent huge allocations
+max_montage_pixels: 1600000000
+max_montage_side: 30000

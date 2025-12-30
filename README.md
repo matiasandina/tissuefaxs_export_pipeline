@@ -2,7 +2,10 @@
 
 ## Why this exists
 TissueFAXS exports OME-TIFF regions, but the exported regions are often rotated 180°. This repo provides a small pipeline to:
-1) validate exports, 2) rotate multi‑channel tiles, and 3) create overview composites and montages for quick visual QC.
+
+1) validate exports
+2) rotate multi‑channel tiles, and 
+3) create overview composites and montages for quick visual QC.
 
 ## Pipeline overview
 - `00-validator.py`: Validate per-region TIFF exports for consistent shapes and physical pixel size.

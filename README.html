@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>readme</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="README_files/libs/clipboard/clipboard.min.js"></script>
+<script src="README_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="README_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="README_files/libs/quarto-html/popper.min.js"></script>
+<script src="README_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="README_files/libs/quarto-html/anchor.min.js"></script>
+<link href="README_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="README_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="README_files/libs/bootstrap/bootstrap-082f36d4db9d63925d28138ef20c6ae7.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="process_tissue_faxs" class="level1">
+<h1>process_tissue_faxs</h1>
+<section id="why-this-exists" class="level2">
+<h2 class="anchored" data-anchor-id="why-this-exists">Why this exists</h2>
+<p>TissueFAXS exports OME-TIFF regions, but the exported regions are often rotated 180°. This repo provides a small pipeline to:</p>
+<ol type="1">
+<li>validate exports</li>
+<li>rotate multi‑channel tiles, and</li>
+<li>create overview composites and montages for quick visual QC.</li>
+</ol>
+</section>
+<section id="pipeline-overview" class="level2">
+<h2 class="anchored" data-anchor-id="pipeline-overview">Pipeline overview</h2>
+<ul>
+<li><code>00-validator.py</code>: Validate per-region TIFF exports for consistent shapes and physical pixel size.</li>
+<li><code>01-rotate_all_regions.py</code>: Rotate multi‑channel <code>*_channels.tiff</code> tiles by 180° and write pyramidal TIFFs.</li>
+<li><code>02-make_overviews.py</code>: Create per‑tile RGB composites, optional split‑channel views, and per‑subject montages.</li>
+</ul>
+</section>
+<section id="repo-layout" class="level2">
+<h2 class="anchored" data-anchor-id="repo-layout">Repo layout</h2>
+<ul>
+<li><code>00-validator.py</code>, <code>01-rotate_all_regions.py</code>, <code>02-make_overviews.py</code>: entrypoints.</li>
+<li><code>src/</code>: shared helpers (TIFF IO, pyramids, metadata).</li>
+<li><code>jobs/</code>: SLURM batch wrappers.</li>
+<li><code>tools/</code>: one-off inspection helpers.</li>
+</ul>
+</section>
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<ul>
+<li>Create the venv in repo root (required):
+<ul>
+<li><code>uv venv --python 3.11.6 .venv</code></li>
+</ul></li>
+<li>Install dependencies:
+<ul>
+<li><code>uv pip install -r requirements.txt</code></li>
+</ul></li>
+</ul>
+</section>
+<section id="inputs-outputs-assumptions" class="level2">
+<h2 class="anchored" data-anchor-id="inputs-outputs-assumptions">Inputs, outputs, assumptions</h2>
+<section id="inputs" class="level3">
+<h3 class="anchored" data-anchor-id="inputs">Inputs</h3>
+<ul>
+<li>Exports should be OME‑TIFFs. Rotation and overview steps expect <code>*_channels.tiff</code> files with channels stacked as <code>(C, Y, X)</code>.</li>
+<li>Subject IDs are inferred from filenames via <code>^sub-[A-Za-z0-9]+_</code>.</li>
+<li>Region labels are inferred via <code>Region &lt;num&gt;</code> in the filename.</li>
+</ul>
+</section>
+<section id="outputs" class="level3">
+<h3 class="anchored" data-anchor-id="outputs">Outputs</h3>
+<ul>
+<li>Rotated tiles are written to the directory passed with <code>--output_dir</code> (or in‑place if omitted).</li>
+<li>Overview composites are written under the <code>--out-jpegs</code> directory, in a subfolder per subject ID.</li>
+<li>Split‑channel views (if enabled) are written alongside composites as <code>&lt;basename&gt;_split.&lt;fmt&gt;</code>.</li>
+<li>Montages are written to the <code>--out-montages</code> directory as <code>Montage_&lt;subject&gt;.&lt;fmt&gt;</code>. <strong>Warning:</strong> rotation currently writes QuPath‑style pyramidal TIFFs without OME metadata, so physical pixel sizes and other OME metadata are not preserved.</li>
+</ul>
+</section>
+</section>
+<section id="typical-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="typical-workflow">Typical workflow</h2>
+<ol type="1">
+<li>Validate exports:
+<ul>
+<li><code>.venv/bin/python 00-validator.py /path/to/exports</code></li>
+</ul></li>
+<li>Rotate tiles:
+<ul>
+<li><code>.venv/bin/python 01-rotate_all_regions.py --input_dir /path/to/exports --output_dir /path/to/rotated</code></li>
+</ul></li>
+<li>Create overviews:
+<ul>
+<li><code>.venv/bin/python 02-make_overviews.py /path/to/rotated --config config.yaml</code></li>
+</ul></li>
+</ol>
+</section>
+<section id="run-locally" class="level2">
+<h2 class="anchored" data-anchor-id="run-locally">Run locally</h2>
+<ul>
+<li>Validate:
+<ul>
+<li><code>.venv/bin/python 00-validator.py /path/to/input_dir</code></li>
+</ul></li>
+<li>Rotate:
+<ul>
+<li><code>.venv/bin/python 01-rotate_all_regions.py --input_dir /path/to/input_dir --output_dir /path/to/out</code></li>
+</ul></li>
+<li>Make overviews:
+<ul>
+<li><code>.venv/bin/python 02-make_overviews.py /path/to/rotated --out-jpegs /path/to/JPEGs --out-montages /path/to/montages --split-view --label basename</code></li>
+</ul></li>
+</ul>
+<section id="config-file-for-02-recommended" class="level3">
+<h3 class="anchored" data-anchor-id="config-file-for-02-recommended">Config file for 02 (recommended)</h3>
+<p>You can use a YAML config to keep defaults in one place. CLI flags always override the config.</p>
+<ol type="1">
+<li>Copy the template:
+<ul>
+<li><code>cp config_template.yaml config.yaml</code></li>
+</ul></li>
+<li>Edit <code>config.yaml</code> as needed.</li>
+<li>Run:
+<ul>
+<li><code>.venv/bin/python 02-make_overviews.py /path/to/rotated --config config.yaml</code></li>
+</ul></li>
+</ol>
+<p>Example for DAPI+signal (blue + red, no green):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ch_blue</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ch_red</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ch_green</span><span class="kw">:</span><span class="at"> </span><span class="dv">-1</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">split_view</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">label</span><span class="kw">:</span><span class="at"> basename</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="debug-single-tile-02" class="level3">
+<h3 class="anchored" data-anchor-id="debug-single-tile-02">Debug single tile (02)</h3>
+<ul>
+<li>Use <code>--only</code> with a filename glob:
+<ul>
+<li><code>.venv/bin/python 02-make_overviews.py /path/to/rotated --only "*Region 001*" --out-jpegs /path/to/JPEGs --out-montages /path/to/montages</code></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="run-with-slurm-sbatch" class="level2">
+<h2 class="anchored" data-anchor-id="run-with-slurm-sbatch">Run with SLURM (sbatch)</h2>
+<p>Batch jobs are in <code>jobs/</code>. They forward all arguments after <code>--</code> to the Python script.</p>
+<p>Examples: - Validate: - <code>sbatch jobs/00-validator.sbatch /path/to/input_dir</code> - Rotate: - <code>sbatch jobs/01-rotate_all_regions.sbatch --input_dir /path/to/input_dir --output_dir /path/to/out</code> - Make overviews: - <code>sbatch jobs/02-make_overviews.sbatch /path/to/rotated --out-jpegs /path/to/JPEGs --out-montages /path/to/montages --split-view --label basename</code> - Make overviews (with config): - <code>sbatch jobs/02-make_overviews.sbatch /path/to/rotated --config config.yaml</code></p>
+<section id="venv-location-for-batch-jobs" class="level3">
+<h3 class="anchored" data-anchor-id="venv-location-for-batch-jobs">Venv location for batch jobs</h3>
+<p>The batch wrappers look for <code>.venv/</code> in the submit directory. If your venv is elsewhere, pass <code>VENV_PATH</code>: - <code>VENV_PATH=/path/to/.venv sbatch jobs/00-validator.sbatch -- /path/to/input_dir</code></p>
+</section>
+</section>
+<section id="key-options-for-02" class="level2">
+<h2 class="anchored" data-anchor-id="key-options-for-02">Key options for 02</h2>
+<ul>
+<li><code>--config &lt;path&gt;</code>: load YAML config; CLI flags override config values.</li>
+<li><code>--split-view</code>: save side‑by‑side channel 0/1 views next to composites.</li>
+<li><code>--label {basename,region,none}</code>: choose label text burned onto tiles.</li>
+<li><code>--only "&lt;glob&gt;"</code>: process a single tile or subset for debugging.</li>
+<li><code>--tile-max-side</code>: downscale large tiles before saving.</li>
+</ul>
+</section>
+<section id="script-reference" class="level2">
+<h2 class="anchored" data-anchor-id="script-reference">Script reference</h2>
+<section id="validator.py" class="level3">
+<h3 class="anchored" data-anchor-id="validator.py">00-validator.py</h3>
+<p>Validates each region for: - consistent spatial dimensions across channel files - consistent physical pixel sizes (OME metadata) - presence of at least one non-RGB scientific channel</p>
+</section>
+<section id="rotate_all_regions.py" class="level3">
+<h3 class="anchored" data-anchor-id="rotate_all_regions.py">01-rotate_all_regions.py</h3>
+<p>Rotates each <code>*_channels.tiff</code> by 180 degrees and writes pyramidal TIFFs. Key options: - <code>--input_dir</code>: directory with <code>*_channels.tiff</code> tiles (required) - <code>--output_dir</code>: output directory (if omitted, overwrites in place) - <code>--dry-run</code>: print actions only <strong>Warning:</strong> output uses QuPath‑style pyramidal TIFFs without OME metadata, so OME physical sizes are not preserved.</p>
+</section>
+<section id="make_overviews.py" class="level3">
+<h3 class="anchored" data-anchor-id="make_overviews.py">02-make_overviews.py</h3>
+<p>Creates RGB composites and montages for QC. Key options: - <code>--config</code>: YAML file with defaults - <code>--out-jpegs</code>, <code>--out-montages</code>: output directories - <code>--ch-blue</code>, <code>--ch-red</code>, <code>--ch-green</code>: channel mapping to RGB - <code>--split-view</code>: save channel 0/1 split view</p>
+</section>
+</section>
+<section id="known-limitations" class="level2">
+<h2 class="anchored" data-anchor-id="known-limitations">Known limitations</h2>
+<ul>
+<li>The subject ID regex is strict. If your filenames differ, update <code>SUBJECT_RE</code> in <code>02-make_overviews.py</code>.</li>
+<li>Label <code>basename</code> can be long; use <code>--label region</code> if you prefer shorter labels.</li>
+</ul>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

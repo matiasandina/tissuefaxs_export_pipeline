@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+logs/
+.uv-cache/
+config.yaml
+
+# true config
+config.yaml
