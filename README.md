@@ -16,7 +16,7 @@ TissueFAXS exports OME-TIFF regions, but the exported regions are often rotated 
 - `00-validator.py`, `01-rotate_all_regions.py`, `02-make_overviews.py`: entrypoints.
 - `src/`: shared helpers (TIFF IO, pyramids, metadata).
 - `jobs/`: SLURM batch wrappers.
-- `tools/`: one-off inspection helpers.
+- `tools/`: one-off inspection helpers (including status reporting).
 
 ## Setup
 - Create the venv in repo root (required):
@@ -52,6 +52,11 @@ TissueFAXS exports OME-TIFF regions, but the exported regions are often rotated 
   - `.venv/bin/python 01-rotate_all_regions.py --input_dir /path/to/input_dir --output_dir /path/to/out`
 - Make overviews:
   - `.venv/bin/python 02-make_overviews.py /path/to/rotated --out-jpegs /path/to/JPEGs --out-montages /path/to/montages --split-view --label basename`
+- Status report (single day folder):
+  - `.venv/bin/python tools/status_table.py /path/to/yyyymmdd`
+- Status report (parent folder containing yyyymmdd):
+  - `.venv/bin/python tools/status_table.py /path/to/parent --scan-root`
+  - Outputs are written as `tissuefaxs_status.html` and `tissuefaxs_status.csv` in the target directory.
 
 ### Config file for 02 (recommended)
 You can use a YAML config to keep defaults in one place. CLI flags always override the config.
